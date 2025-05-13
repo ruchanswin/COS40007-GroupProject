@@ -7,8 +7,8 @@ from scipy import stats
 
 pd.set_option('display.max_columns', None)
 
-df = pd.read_csv('./model/dataset/clean_data.csv')
-print(df.dtypes)
+df = pd.read_csv('./model/clean_data_clst.csv')
+# print(df.dtypes)
 # df.head()
 
 avg_latency = np.mean(df[['svr1', 'svr2', 'svr3', 'svr4']], axis=1)
