@@ -1,24 +1,17 @@
 """
-This script cleans the raw data to used for training the model.
+This script cleans the raw data to use for training the model.
 """
 
 import pandas as pd
 from os import listdir, path
-import zipfile
 
-# Path to the directory containing the raw data ZIP archive
-DATASET_PATH = './data/'
-input_zip_filename = 'raw_data.zip'  # your input zip file
-input_zip_path = path.join(DATASET_PATH, input_zip_filename)
+# Path to the directory containing the raw CSV files directly (no zip)
+RAW_DATA_PATH = './dataset/'
 
-# Extract the single ZIP file
-with zipfile.ZipFile(input_zip_path, 'r') as zip_ref:
-    zip_ref.extractall(DATASET_PATH)
-print(f"Extracted {input_zip_filename}")
+# Get list of all CSV files in the raw data folder
+csvs = [path.join(RAW_DATA_PATH, f) for f in listdir(RAW_DATA_PATH) if f.endswith('.csv')]
 
-# Now combine all CSV files (including those extracted) into a single dataframe
-csvs = [path.join(DATASET_PATH, f) for f in listdir(DATASET_PATH) if f.endswith('.csv')]
-
+# Combine all CSV files into a single dataframe
 raw_data = pd.concat([pd.read_csv(csv, low_memory=False) for csv in csvs])
 
 # Features selected
@@ -31,14 +24,13 @@ raw_data = raw_data[features].dropna()
 
 # Remove rows with invalid values
 raw_data = raw_data[(raw_data['latitude'] != 99.0) & (raw_data['longitude'] != 999.0)]
-
 raw_data = raw_data[raw_data['speed'] != -1]
-
 raw_data = raw_data[(raw_data['svr1'] != 1000) &
                     (raw_data['svr2'] != 1000) &
                     (raw_data['svr3'] != 1000) &
                     (raw_data['svr4'] != 1000)]
 
+# Convert columns to int
 raw_data['YEAR'] = raw_data['Year'].astype(int)
 raw_data['MONTH'] = raw_data['Month'].astype(int)
 raw_data['DATE'] = raw_data['Date'].astype(int)
@@ -57,9 +49,9 @@ raw_data['DATE'] = pd.to_datetime(raw_data['YEAR'].astype(str) + '-' + raw_data[
 raw_data['TIME'] = pd.to_datetime(raw_data['HOUR'].astype(str) + ':' + raw_data['MIN'].astype(str) + ':' + raw_data['SEC'].astype(str), format='%H:%M:%S').dt.time
 
 # Selecting clean features
-clean_features = ['DATE', 'TIME', 'Day','latitude', 'longitude', 'speed', 'svr1', 'svr2', 'svr3', 'svr4', 
+clean_features = ['DATE', 'TIME', 'Day', 'latitude', 'longitude', 'speed', 'svr1', 'svr2', 'svr3', 'svr4', 
                   'average_latency', 'Transfer size', 'Transfer size-RX', 'total_data_transferred',
-                  'Bitrate', 'Bitrate-RX','total_throughput', 'send_data', 'square_id']
+                  'Bitrate', 'Bitrate-RX', 'total_throughput', 'send_data', 'square_id']
 
 raw_data = raw_data[clean_features]
 
@@ -72,7 +64,8 @@ raw_data = raw_data.rename(columns={
     'send_data': 'application_data',
     'Day': 'DAY'
 })
+# Save the cleaned data to a new CSV file
+clean_csv_path = './dataset/clean_data.csv'
+raw_data.to_csv(clean_csv_path, index=False)
 
-# Save the cleaned data to CSV
-clean_csv_path = './data/clean_data.csv'
-# raw_data.to_csv(clean_csv_path, index=False)
+print(f"Cleaned data saved to {clean_csv_path}")
