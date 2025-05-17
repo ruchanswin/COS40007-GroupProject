@@ -6,7 +6,7 @@ import pandas as pd
 from os import listdir, path
 
 # Path to the directory containing the raw CSV files directly (no zip)
-RAW_DATA_PATH = './dataset/'
+RAW_DATA_PATH = './dataset/raw_data/'
 
 # Get list of all CSV files in the raw data folder
 csvs = [path.join(RAW_DATA_PATH, f) for f in listdir(RAW_DATA_PATH) if f.endswith('.csv')]
@@ -65,7 +65,7 @@ raw_data = raw_data.rename(columns={
     'Day': 'DAY'
 })
 # Save the cleaned data to a new CSV file
-clean_csv_path = './clean_data.csv'
+clean_csv_path = './dataset/clean_data.csv'
 raw_data.to_csv(clean_csv_path, index=False)
 
 print(f"Cleaned data saved to {clean_csv_path}")
