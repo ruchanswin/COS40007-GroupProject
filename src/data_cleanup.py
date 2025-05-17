@@ -65,7 +65,7 @@ raw_data = raw_data.rename(columns={
     'Day': 'DAY'
 })
 # Save the cleaned data to a new CSV file
-clean_csv_path = './dataset/clean_data.csv'
+clean_csv_path = './clean_data.csv'
 raw_data.to_csv(clean_csv_path, index=False)
 
 print(f"Cleaned data saved to {clean_csv_path}")
