@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.tsa.arima.model import ARIMA
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import matplotlib.pyplot as plt
@@ -12,9 +11,7 @@ class TimeSeriesForecaster:
     def __init__(self, data=None, target_column=None):
         self.data = data
         self.target_column = target_column
-        self.sarimax_model = None
         self.arima_model = None
-        self.fitted_sarimax = None
         self.fitted_arima = None
         
     def preprocess_data(self, data=None, target_column=None):
@@ -38,25 +35,10 @@ class TimeSeriesForecaster:
         
         return self.data
     
-    def train_models(self, order=(1, 1, 1), seasonal_order=(1, 1, 0, 24)):
+    def train_models(self, order=(1, 1, 1)):
         if self.data is None or self.target_column is None:
             raise ValueError("Data must be preprocessed before training")
             
-        # Train SARIMAX model
-        self.sarimax_model = SARIMAX(
-            self.data[self.target_column],
-            order=order,
-            seasonal_order=seasonal_order,
-            enforce_stationarity=False,
-            enforce_invertibility=False
-        )
-        
-        self.fitted_sarimax = self.sarimax_model.fit(
-            disp=False,
-            maxiter=100,
-            method='lbfgs'
-        )
-        
         # Train ARIMA model
         self.arima_model = ARIMA(
             self.data[self.target_column],
@@ -65,41 +47,34 @@ class TimeSeriesForecaster:
         
         self.fitted_arima = self.arima_model.fit()
         
-        return self.fitted_sarimax, self.fitted_arima
+        return self.fitted_arima
     
-    def predict_next_hour(self, steps=1, model_type='both'):
-        if self.fitted_sarimax is None or self.fitted_arima is None:
-            raise ValueError("Models must be trained before making predictions")
+    def predict_next_hour(self, steps=1):
+        if self.fitted_arima is None:
+            raise ValueError("Model must be trained before making predictions")
             
-        predictions = {}
-        
-        if model_type in ['sarimax', 'both']:
-            predictions['SARIMAX'] = self.fitted_sarimax.forecast(steps=steps)
-            
-        if model_type in ['arima', 'both']:
-            predictions['ARIMA'] = self.fitted_arima.forecast(steps=steps)
-            
+        predictions = self.fitted_arima.forecast(steps=steps)
         return predictions
     
     def evaluate_models(self, test_data):
-        if self.fitted_sarimax is None or self.fitted_arima is None:
-            raise ValueError("Models must be trained before evaluation")
+        if self.fitted_arima is None:
+            raise ValueError("Model must be trained before evaluation")
             
         predictions = self.predict_next_hour(steps=len(test_data))
         actual = test_data[self.target_column]
         
-        metrics = {}
-        for model_name, pred in predictions.items():
-            # Calculate various metrics
-            mse = mean_squared_error(actual, pred)
-            mae = mean_absolute_error(actual, pred)
-            rmse = np.sqrt(mse)
-            
-            metrics[model_name] = {
+        # Calculate various metrics
+        mse = mean_squared_error(actual, predictions)
+        mae = mean_absolute_error(actual, predictions)
+        rmse = np.sqrt(mse)
+        
+        metrics = {
+            'ARIMA': {
                 'MSE': f"{mse:.4f}",
                 'MAE': f"{mae:.4f}",
                 'RMSE': f"{rmse:.4f}"
             }
+        }
         
         # Create comparison DataFrame
         metrics_df = pd.DataFrame(metrics).T
@@ -111,7 +86,6 @@ class TimeSeriesForecaster:
         # Create table
         table = plt.table(
             cellText=metrics_df.values,
-            rowLabels=metrics_df.index,
             colLabels=metrics_df.columns,
             cellLoc='center',
             loc='center',
@@ -125,10 +99,10 @@ class TimeSeriesForecaster:
         table.scale(1.2, 1.5)
         
         # Add title
-        plt.title('Model Comparison Metrics', pad=20, fontsize=14)
+        plt.title('ARIMA Model Metrics', pad=20, fontsize=14)
         
         # Save the plot
-        plt.savefig('./results/model_comparison_metrics.png', 
+        plt.savefig('./results/model_metrics.png', 
                    dpi=300, 
                    bbox_inches='tight',
                    facecolor='white',
@@ -136,14 +110,14 @@ class TimeSeriesForecaster:
         plt.close()
         
         # Print the metrics table
-        print("\nModel Comparison Metrics:")
+        print("\nModel Metrics")
         print(metrics_df)
         
         return metrics_df
     
     def plot_forecast(self, test_data=None, forecast_steps=24):
-        if self.fitted_sarimax is None or self.fitted_arima is None:
-            raise ValueError("Models must be trained before plotting")
+        if self.fitted_arima is None:
+            raise ValueError("Model must be trained before plotting")
             
         plt.figure(figsize=(15, 7))
         
@@ -151,48 +125,45 @@ class TimeSeriesForecaster:
         plt.plot(self.data.index, self.data[self.target_column], label='Historical Data', color='blue')
         
         # Generate forecasts
-        forecasts = self.predict_next_hour(steps=forecast_steps)
+        forecast = self.predict_next_hour(steps=forecast_steps)
         forecast_index = pd.date_range(
             start=self.data.index[-1] + timedelta(hours=1),
             periods=forecast_steps,
             freq='h'
         )
         
-        # Plot forecasts
-        colors = {'SARIMAX': 'red', 'ARIMA': 'green'}
-        for model_name, forecast in forecasts.items():
-            plt.plot(forecast_index, forecast, label=f'{model_name} Forecast', 
-                    color=colors[model_name], linestyle='--')
+        # Add the last historical point to the forecast for continuity
+        forecast = np.concatenate([[self.data[self.target_column].iloc[-1]], forecast])
+        forecast_index = pd.date_range(
+            start=self.data.index[-1],
+            periods=forecast_steps + 1,
+            freq='h'
+        )
+        
+        # Plot forecast
+        plt.plot(forecast_index, forecast, label='ARIMA Forecast', 
+                color='red', linestyle='--')
         
         # Plot test data if provided
         if test_data is not None:
             plt.plot(test_data.index, test_data[self.target_column], 
                     label='Test Data', color='purple')
         
-        plt.title('Time Series Forecast Comparison')
+        plt.title('ARIMA Time Series Forecast')
         plt.xlabel('Time')
         plt.ylabel('Value')
         plt.legend()
         plt.grid(True)
-        plt.savefig("./results/forecast_comparison.png")
+        plt.savefig("./results/forecast.png")
         plt.close()
 
-    def save_models(self, sarimax_path='./model/saved_models/sarimax_model.pkl',
-                   arima_path='./model/saved_models/arima_model.pkl'):
-        """Save the trained models to files"""
-        if self.fitted_sarimax is None or self.fitted_arima is None:
-            raise ValueError("No trained models to save")
+    def save_models(self, arima_path='./model/saved_models/arima_model.pkl'):
+        """Save the trained model to file"""
+        if self.fitted_arima is None:
+            raise ValueError("No model to save")
             
         # Create directory if it doesn't exist
-        os.makedirs(os.path.dirname(sarimax_path), exist_ok=True)
-        
-        # Save SARIMAX model
-        with open(sarimax_path, 'wb') as f:
-            pickle.dump({
-                'fitted_model': self.fitted_sarimax,
-                'target_column': self.target_column
-            }, f)
-        print(f"SARIMAX model saved to {sarimax_path}")
+        os.makedirs(os.path.dirname(arima_path), exist_ok=True)
         
         # Save ARIMA model
         with open(arima_path, 'wb') as f:
@@ -202,24 +173,18 @@ class TimeSeriesForecaster:
             }, f)
         print(f"ARIMA model saved to {arima_path}")
         
-    def load_models(self, sarimax_path='./model/saved_models/sarimax_model.pkl',
-                   arima_path='./model/saved_models/arima_model.pkl'):
-        """Load trained models from files"""
-        if not os.path.exists(sarimax_path) or not os.path.exists(arima_path):
-            raise FileNotFoundError("One or both model files not found")
-            
-        # Load SARIMAX model
-        with open(sarimax_path, 'rb') as f:
-            sarimax_data = pickle.load(f)
-            self.fitted_sarimax = sarimax_data['fitted_model']
+    def load_models(self, arima_path='./model/saved_models/arima_model.pkl'):
+        """Load trained model from file"""
+        if not os.path.exists(arima_path):
+            raise FileNotFoundError("Model file not found")
             
         # Load ARIMA model
         with open(arima_path, 'rb') as f:
             arima_data = pickle.load(f)
             self.fitted_arima = arima_data['fitted_model']
             
-        self.target_column = sarimax_data['target_column']
-        print("Both models loaded successfully")
+        self.target_column = arima_data['target_column']
+        print("ARIMA model loaded successfully")
 
 # Example usage:
 if __name__ == "__main__":
@@ -229,9 +194,13 @@ if __name__ == "__main__":
     # Convert Convert_time to datetime
     df['Convert_time'] = pd.to_datetime(df['DATE'] + ' ' + df['TIME'])
     
+    # Define valid date range
+    min_date = pd.to_datetime('2022-07-04 05:00:00')
+    max_date = pd.to_datetime('2022-07-22 14:00:00')
+    
     # Get user input for the date range
-    start_date_str = input("Enter the start date and time (YYYY-MM-DD HH:MM): ")
-    end_date_str = input("Enter the end date and time (YYYY-MM-DD HH:MM): ")
+    start_date_str = input("Enter the starttime (YYYY-MM-DD HH:MM): ")
+    end_date_str = input("Enter the endtime (YYYY-MM-DD HH:MM): ")
     
     try:
         start_date = pd.to_datetime(start_date_str)
@@ -239,6 +208,14 @@ if __name__ == "__main__":
         
         if end_date < start_date:
             print("End date must be after start date")
+            exit()
+            
+        if start_date < min_date:
+            print(f"Start date must be after {min_date.strftime('%Y-%m-%d %H:%M')}")
+            exit()
+            
+        if end_date > max_date:
+            print(f"End date must be before {max_date.strftime('%Y-%m-%d %H:%M')}")
             exit()
             
     except ValueError:
@@ -266,20 +243,17 @@ if __name__ == "__main__":
     # Create DataFrame with hourly data
     sample_data = pd.DataFrame({'value': hourly_data})
     
-    print(f"\nTraining models with data from {start_date_str} to {end_date_str}")
-    print(f"Number of hourly data points: {len(sample_data)}")
-    
-    # Initialize and train the models
+    # Initialize and train the model
     forecaster = TimeSeriesForecaster(sample_data, 'value')
     forecaster.preprocess_data()
     forecaster.train_models()
     
-    # Save the trained models
+    # Save the trained model
     forecaster.save_models()
     
     # Get user input for prediction period
     try:
-        prediction_hours = int(input("\nEnter the number of hours to predict: "))
+        prediction_hours = int(input("\nEnter prediction hours: "))
         if prediction_hours <= 0:
             print("Prediction period must be greater than 0")
             exit()
@@ -289,13 +263,11 @@ if __name__ == "__main__":
     
     # Make predictions for the specified number of hours
     predictions = forecaster.predict_next_hour(steps=prediction_hours)
-    print(f"\nPredictions for the next {prediction_hours} hours after the end date:")
+    print(f"\nPredictions for the next hours after the endtime:")
     
     for i in range(prediction_hours):
         next_hour = end_date + pd.Timedelta(hours=i+1)
-        print(f"\n{next_hour.strftime('%Y-%m-%d %H:00')}:")
-        for model_name, pred in predictions.items():
-            print(f"{model_name}: {pred[i]:.2f}")
+        print(f"{next_hour.strftime('%Y-%m-%d %H:00')}: {predictions.iloc[i]:.2f}")
     
     # Plot results
     forecaster.plot_forecast(forecast_steps=prediction_hours)
@@ -304,5 +276,5 @@ if __name__ == "__main__":
     test_data = sample_data.iloc[-24:].copy()
     train_data = sample_data.iloc[:-24].copy()
     
-    # Evaluate the models
+    # Evaluate the model
     forecaster.evaluate_models(test_data)
