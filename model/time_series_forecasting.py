@@ -15,23 +15,27 @@ def create_features(data, target_column):
     # Time features
     df['hour'] = df.index.hour
     df['day_of_week'] = df.index.dayofweek
-    
-    # Cyclical encoding for hour and day of week
+    df['minute'] = df.index.minute
     df['hour_sin'] = np.sin(2 * np.pi * df['hour']/24)
     df['hour_cos'] = np.cos(2 * np.pi * df['hour']/24)
     df['day_sin'] = np.sin(2 * np.pi * df['day_of_week']/7)
     df['day_cos'] = np.cos(2 * np.pi * df['day_of_week']/7)
-    
+    df['minute_sin'] = np.sin(2 * np.pi * df['minute']/60)
+    df['minute_cos'] = np.cos(2 * np.pi * df['minute']/60)
+
     # Rolling features with multiple windows
-    windows = [6, 12, 24]
+    windows = [3, 6, 12, 24]
     for window in windows:
+
         df[f'{target_column}_rolling_mean_{window}'] = df[target_column].rolling(window=window, min_periods=1).mean()
         df[f'{target_column}_rolling_std_{window}'] = df[target_column].rolling(window=window, min_periods=1).std()
+        df[f'{target_column}_rolling_min_{window}'] = df[target_column].rolling(window=window, min_periods=1).min()
+        df[f'{target_column}_rolling_max_{window}'] = df[target_column].rolling(window=window, min_periods=1).max()
+        df[f'{target_column}_rolling_skew_{window}'] = df[target_column].rolling(window=window, min_periods=1).skew()
+        df[f'{target_column}_rolling_roc_{window}'] = df[target_column].pct_change(periods=window)
     
     # Interaction features
     df['hour_target_interaction'] = df['hour'] * df[target_column]
-    epsilon = 1e-10
-    df['rolling_mean_std_ratio'] = df[f'{target_column}_rolling_mean_24'] / (df[f'{target_column}_rolling_std_24'] + epsilon)
     
     return df.bfill().ffill()
 
