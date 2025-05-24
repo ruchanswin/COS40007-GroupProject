@@ -7,6 +7,7 @@ from datetime import timedelta
 import pickle
 import os
 import warnings
+from itertools import product
 warnings.filterwarnings('ignore')
 
 def create_features(data, target_column):
@@ -47,24 +48,9 @@ class TimeSeriesForecaster:
         self.end_datetime = end_datetime
         self.arima_model = None
         self.fitted_arima = None
+        self.best_params = None
         
-    def preprocess_data(self, data=None, target_column=None, start_datetime=None, end_datetime=None):
-        if data is not None:
-            self.data = data
-        if target_column is not None:
-            self.target_column = target_column
-        if start_datetime is not None:
-            self.start_datetime = start_datetime
-        if end_datetime is not None:
-            self.end_datetime = end_datetime
-            
-        if self.data is None or self.target_column is None:
-            raise ValueError("Data and target column must be provided")
-            
-        # Ensure datetime index
-        if not isinstance(self.data.index, pd.DatetimeIndex):
-            raise ValueError("Data must have a datetime index")
-            
+    def preprocess_data(self):
         # Sort by datetime
         self.data = self.data.sort_index()
         
@@ -88,16 +74,73 @@ class TimeSeriesForecaster:
         
         return self.data
     
-    def train_models(self, order=(1,1,1)):
+    def create_data_splits(self, test_size=24, val_size=24):
+        if len(self.data) < (test_size + val_size):
+            raise ValueError("Not enough data for the specified split sizes")
+            
+        test_data = self.data.iloc[-test_size:].copy()
+        val_data = self.data.iloc[-(test_size + val_size):-test_size].copy()
+        train_data = self.data.iloc[:-(test_size + val_size)].copy()
+        return train_data, val_data, test_data
+    
+    def find_best_arima_params(self, train_data, val_data, p_range=(0, 2), d_range=(0, 2), q_range=(0, 2)):
+        best_aic = float('inf')
+        best_params = None
+        results = []
+        
+        # Generate all possible parameter combinations
+        param_combinations = list(product(range(p_range[0], p_range[1] + 1), range(d_range[0], d_range[1] + 1), range(q_range[0], q_range[1] + 1)))
+        
+        print("\nPerforming grid search for best ARIMA parameters...")
+        for p, d, q in param_combinations:
+            try:
+                model = ARIMA(train_data[self.target_column], order=(p, d, q), exog=train_data.drop(columns=[self.target_column]))
+                fitted_model = model.fit()
+                
+                val_predictions = fitted_model.forecast(steps=len(val_data), exog=val_data.drop(columns=[self.target_column]))
+                
+                # Calculate metrics
+                mse = mean_squared_error(val_data[self.target_column], val_predictions)
+                mae = mean_absolute_error(val_data[self.target_column], val_predictions)
+                aic = fitted_model.aic
+                
+                results.append({'p': p, 'd': d, 'q': q, 'AIC': aic, 'MSE': mse, 'MAE': mae})
+                
+                if aic < best_aic:
+                    best_aic = aic
+                    best_params = (p, d, q)
+                    
+            except:
+                continue
+        
+        self.best_params = best_params
+        print(f"\nBest ARIMA parameters: {best_params}")
+
+        return best_params
+    
+    def train_models(self, order=None):
         if self.data is None or self.target_column is None:
             raise ValueError("Data must be preprocessed before training")
-            
+        
+        # Create data splits
+        train_data, val_data, _ = self.create_data_splits()
+        
+        if order is None:
+            # Perform hyperparameter tuning
+            order = self.find_best_arima_params(train_data, val_data)
+        
+        # Train final model with best parameters
         self.arima_model = ARIMA(
-            self.data[self.target_column],
+            train_data[self.target_column],
             order=order,
-            exog=self.data.drop(columns=[self.target_column])
+            exog=train_data.drop(columns=[self.target_column])
         )
         self.fitted_arima = self.arima_model.fit()
+        
+        # # Print model summary
+        # print("\nModel Summary:")
+        # print(self.fitted_arima.summary())
+        
         return self.fitted_arima
     
     def predict_next_hour(self, steps=1):
@@ -113,11 +156,16 @@ class TimeSeriesForecaster:
         predictions = self.predict_next_hour(steps=len(test_data))
         actual = test_data[self.target_column]
         
+        # Calculate basic metrics
+        mse = mean_squared_error(actual, predictions)
+        mae = mean_absolute_error(actual, predictions)
+        rmse = np.sqrt(mse)
+        
         metrics = {
             'ARIMA': {
-                'MSE': mean_squared_error(actual, predictions),
-                'MAE': mean_absolute_error(actual, predictions),
-                'RMSE': np.sqrt(mean_squared_error(actual, predictions))
+                'MSE': mse,
+                'MAE': mae,
+                'RMSE': rmse,
             }
         }
         
@@ -175,8 +223,8 @@ if __name__ == "__main__":
     df['Convert_time'] = pd.to_datetime(df['DATE'] + ' ' + df['TIME'])
     
     # Set default datetime constraints
-    default_start = pd.to_datetime('2022-07-04 05:43:37')
-    default_end = pd.to_datetime('2022-07-22 13:25:41')
+    default_start = df['Convert_time'].min()
+    default_end = df['Convert_time'].max()
     
     # Get user input for datetime range
     try:
@@ -190,8 +238,8 @@ if __name__ == "__main__":
         if end_datetime > default_end or end_datetime < default_start:
             print(f"End datetime must be before {default_end} and after {default_start}")
             exit()
-        if (end_datetime - start_datetime).total_seconds() / 3600 < 24:
-            print("Please provide at least 24 hours of data")
+        if (end_datetime - start_datetime).total_seconds() / 3600 < 48:  # Increased minimum to 48 hours to accommodate validation set
+            print("Please provide at least 48 hours of data")
             exit()
             
     except ValueError:
@@ -201,7 +249,6 @@ if __name__ == "__main__":
     # Aggregate data by hour and calculate mean for all relevant columns
     hourly_data = df.set_index('Convert_time').resample('h').agg({
         'total_throughput': 'mean',
-        'average_latency': 'mean'
     }).bfill().ffill()
     
     # Handle missing values
@@ -216,7 +263,7 @@ if __name__ == "__main__":
         forecaster = TimeSeriesForecaster(sample_data, 'total_throughput', start_datetime, end_datetime)
         forecaster.preprocess_data()
         
-        # Continue with model training (will automatically find best parameters)
+        # Train model with automatic hyperparameter tuning
         forecaster.train_models()
         
         # Save the trained model
@@ -245,7 +292,6 @@ if __name__ == "__main__":
         
         # Create a test set for evaluation (last 24 hours of data)
         test_data = sample_data.iloc[-24:].copy()
-        train_data = sample_data.iloc[:-24].copy()
         
         # Evaluate the model
         forecaster.evaluate_models(test_data)
