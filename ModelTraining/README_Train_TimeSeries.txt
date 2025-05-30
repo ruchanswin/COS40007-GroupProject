@@ -28,8 +28,8 @@ To forecast hourly future throughput values using historical throughput trends a
 
 ## Workflow
 
-1. Load and parse `clean_data_clst.csv`
-2. Resample to hourly data
+1. Load and parse `clean_data.csv`
+2. Perform similar feature engineering like the clean_data_Training.csv and resample to hourly data
 3. Generate time features
 4. Split into train and test sets
 5. Fit ARIMA model with external regressors
