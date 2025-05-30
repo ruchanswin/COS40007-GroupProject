@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from os import listdir
 
-DATASET_PATH = './model/dataset/'
+DATASET_PATH = './RawData/'
 csvs = [DATASET_PATH + f for f in listdir(DATASET_PATH) if f.endswith('.csv')]
 
 # Combining all csv files into a single dataframe
@@ -28,6 +28,7 @@ raw_data = raw_data.drop(columns=['Year', 'Month', 'Date', 'hour', 'min', 'sec']
 # two composite features
 raw_data['total_throughput'] = raw_data['Bitrate'] + raw_data['Bitrate-RX']
 raw_data['average_latency'] = raw_data[['svr1', 'svr2', 'svr3', 'svr4']].mean(axis=1)
+raw_data['total_bandwidth'] = raw_data['Transfer size'] * raw_data['Transfer size-RX']
 
 raw_data['DATES'] = pd.to_datetime(raw_data['YEAR'].astype(str) + '-' + raw_data['MONTH'].astype(str) + '-' + raw_data['DATE'].astype(str), format='%Y-%m-%d').dt.date
 raw_data['TIME'] = pd.to_datetime(raw_data['HOUR'].astype(str) + ':' + raw_data['MIN'].astype(str) + ':' + raw_data['SEC'].astype(str), format='%H:%M:%S').dt.time
@@ -47,7 +48,7 @@ raw_data = raw_data.rename(columns={
     'Day': 'DAY'
 })
 # print(raw_data.dtypes)
-raw_data.to_csv('./model/processed_data/clean_data_clst.csv', index=False)
+raw_data.to_csv('./ProcessedData/clean_data_clst.csv', index=False)
 
 # data = pd.read_csv('clean_data_clst.csv')
 # data.columns
