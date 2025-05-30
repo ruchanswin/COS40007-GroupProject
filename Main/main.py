@@ -212,7 +212,7 @@ if __name__ == '__main__':
     system = ZoneForecastSystem(
         "./TrainedModel/Clustering/cluster_label_kmeans.pkl",
         "./TrainedModel/Clustering/cluster_label_scaler.pkl",
-        "./TrainedModel/Clustering/clustered_output.csv",
+        "./TrainedModel/Clustering/clustering_output.csv",
         "./TrainedModel/TimeSeries/arima_model.pkl",
         "./TrainedModel/Clustering/zone_cluster_map.csv"
     )
