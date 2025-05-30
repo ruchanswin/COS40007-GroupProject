@@ -28,7 +28,7 @@ To group data points representing physical locations into performance zones usin
 
 ## Workflow
 
-1. Load the cleaned dataset (`clean_data.csv`)
+1. Load the cleaned dataset (`clean_data_training.csv`)
 2. Apply MinMax scaling to selected features
 3. Train multiple KMeans models (K = 1 to 10)
 4. Evaluate using silhouette scores
@@ -45,5 +45,5 @@ To group data points representing physical locations into performance zones usin
 
 ## Usage Notes
 
-- Ensure input file: `clean_data.csv` is placed correctly
+- Ensure input file: `clean_data_training.csv` is placed correctly
 - The model is later used by the GUI to label new inputs based on location and network metrics

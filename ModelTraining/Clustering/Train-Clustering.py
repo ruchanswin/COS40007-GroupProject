@@ -7,7 +7,7 @@ import joblib
 import os
 
 # Load raw unscaled data
-df = pd.read_csv("./ProcessedData/clean_data.csv")
+df = pd.read_csv("./ProcessedData/clean_data_training.csv")
 
 # Select features
 feature_cols = ['latitude', 'longitude', 'average_latency', 'total_throughput', 'total_bandwidth']

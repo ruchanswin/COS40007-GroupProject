@@ -47,4 +47,4 @@ raw_data = raw_data.rename(columns={
     'send_data': 'application_data',
     'Day': 'DAY'
 })
-raw_data.to_csv('./ProcessedData/clean_data_testing.csv', index=False)
+raw_data.to_csv('./ProcessedData/clean_data_training.csv', index=False)
