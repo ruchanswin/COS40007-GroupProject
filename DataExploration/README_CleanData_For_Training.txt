@@ -64,6 +64,5 @@ To consolidate and clean raw network measurement data from multiple CSV files—
 - `Convert_time` is the key datetime field for temporal analysis and forecasting.
 - The cleaned dataset is used by:
   - Kmean training pipeline
-  - ARIMA training pipeline
 
 ---
