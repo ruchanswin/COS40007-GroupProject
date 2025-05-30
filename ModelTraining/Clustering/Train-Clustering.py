@@ -89,7 +89,7 @@ metrics_df = pd.DataFrame(metrics)
 metrics_df.to_csv(f"{output_dir}clustering_metrics.csv", index=False)
 
 # Save model and data
-df.to_csv(f"{output_dir}clustered_output.csv", index=False)
+df.to_csv(f"{output_dir}clustering_output.csv", index=False)
 joblib.dump({'scaler': scaler, 'features': feature_cols}, f"{output_dir}cluster_label_scaler.pkl")
 joblib.dump({'kmeans': kmeans, 'features': feature_cols}, f"{output_dir}cluster_label_kmeans.pkl")
 
