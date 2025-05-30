@@ -41,7 +41,7 @@ To consolidate and clean raw network measurement data from multiple CSV files—
 
 ## Output
 
-- File: `5G Zone Prediction System/ProcessedData/clean_data_clst.csv`
+- File: `5G Zone Prediction System/ProcessedData/clean_data_Training.csv`
 - Contains cleaned and feature-enriched records:
   - Time features, GPS coordinates, speed, server latencies, transfer sizes, bitrate metrics
   - Derived metrics: `total_throughput`, `total_bandwidth`, `average_latency`
