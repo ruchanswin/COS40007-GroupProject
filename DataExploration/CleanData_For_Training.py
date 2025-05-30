@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from os import listdir
 
-DATASET_PATH = './RawData/'
+DATASET_PATH = './5G Zone Prediction System/RawData/'
 csvs = [DATASET_PATH + f for f in listdir(DATASET_PATH) if f.endswith('.csv')]
 
 # Combining all csv files into a single dataframe
@@ -48,7 +48,7 @@ raw_data = raw_data.rename(columns={
     'Day': 'DAY'
 })
 # print(raw_data.dtypes)
-raw_data.to_csv('./ProcessedData/clean_data_clst.csv', index=False)
+raw_data.to_csv('./ProcessedData/clean_data_Traing.csv', index=False)
 
 # data = pd.read_csv('clean_data_clst.csv')
 # data.columns
