@@ -1,5 +1,5 @@
 
-# Train-Clustering.ipynb
+# Train-Clustering.py
 
 This Jupyter Notebook trains a KMeans clustering model to classify geographical zones based on 5G network performance metrics.
 
@@ -7,7 +7,7 @@ This Jupyter Notebook trains a KMeans clustering model to classify geographical 
 
 ## Location
 
-`<Local Directory>/5G Zone Prediction System/ModelTraining/Clustering/Train-Clustering.ipynb`
+`<Local Directory>/5G Zone Prediction System/ModelTraining/Clustering/Train-Clustering.py`
 
 ---
 
@@ -28,7 +28,7 @@ To group data points representing physical locations into performance zones usin
 
 ## Workflow
 
-1. Load the cleaned dataset (`clean_data_Training.csv`)
+1. Load the cleaned dataset (`clean_data.csv`)
 2. Apply MinMax scaling to selected features
 3. Train multiple KMeans models (K = 1 to 10)
 4. Evaluate using silhouette scores
@@ -45,5 +45,5 @@ To group data points representing physical locations into performance zones usin
 
 ## Usage Notes
 
-- Ensure input file: `clean_data_Traing.csv` is placed correctly
+- Ensure input file: `clean_data.csv` is placed correctly
 - The model is later used by the GUI to label new inputs based on location and network metrics

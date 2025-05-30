@@ -1,5 +1,5 @@
 
-# Train-TimeSeries.ipynb
+# Train-TimeSeries.py
 
 This notebook trains an ARIMA model for time-series forecasting of 5G network performance (total throughput) using historical data.
 
@@ -7,7 +7,7 @@ This notebook trains an ARIMA model for time-series forecasting of 5G network pe
 
 ## Location
 
-`<Local Directory>/5G Zone Prediction System/ModelTraining/TimeSeries/Train-TimeSeries.ipynb`
+`<Local Directory>/5G Zone Prediction System/ModelTraining/TimeSeries/Train-TimeSeries.py`
 
 ---
 

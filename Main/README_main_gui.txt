@@ -55,7 +55,7 @@ TrainedModel/
 ├── Clustering/
 │   ├── cluster_label_kmeans.pkl
 │   ├── cluster_label_scaler.pkl
-│   ├── clustered_output.csv
+│   ├── clustering_output.csv
 │   └── zone_cluster_map.csv
 └── TimeSeries/
     └── arima_model.pkl

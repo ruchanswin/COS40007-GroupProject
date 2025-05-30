@@ -1,5 +1,5 @@
 
-# CleanData_For_Training.py
+# data_cleanup.py
 
 This script processes raw 5G network performance data files into a clean and structured dataset ready for clustering and time-series forecasting tasks.
 
@@ -30,18 +30,18 @@ To consolidate and clean raw network measurement data from multiple CSV files—
 ```plaintext
 5G Zone Prediction System/
 ├── DataExploration/
-│   ├── CleanData_For_Training.py
+│   ├── data_cleanup.py
 ├── RawData/
 │   └── data.csv<list>                <-- Raw CSV files from OneDrive go here
 ├── ProcessedData/
-│   └── clean_data_clst.csv  <-- Cleaned output will be saved here
+│   └── clean_data.csv  <-- Cleaned output will be saved here
 ```
 
 ---
 
 ## Output
 
-- File: `5G Zone Prediction System/ProcessedData/clean_data_Training.csv`
+- File: `5G Zone Prediction System/ProcessedData/clean_data.csv`
 - Contains cleaned and feature-enriched records:
   - Time features, GPS coordinates, speed, server latencies, transfer sizes, bitrate metrics
   - Derived metrics: `total_throughput`, `total_bandwidth`, `average_latency`
@@ -53,7 +53,7 @@ To consolidate and clean raw network measurement data from multiple CSV files—
 1. Ensure you have downloaded and placed the raw data in `./5G Zone Prediction System/RawData`
 2. Execute:
    ```bash
-   python CleanData_For_Training.py
+   python data_cleanup.py
    ```
 
 ---
