@@ -28,13 +28,29 @@ To consolidate and clean raw network measurement data from multiple CSV files—
 ## Updated Directory Configuration
 
 ```plaintext
-5G Zone Prediction System/
-├── DataExploration/
+COS4007
+├── dataset/
+│   ├── raw_data/                <-- Raw CSV files from OneDrive go here
+│   ├── cleaned_data.csv
+│   ├── combined_raw_data.csv
 │   ├── data_cleanup.py
-├── RawData/
-│   └── data.csv<list>                <-- Raw CSV files from OneDrive go here
-├── ProcessedData/
-│   └── clean_data.csv  <-- Cleaned output will be saved here
+│   ├── data_summary.py
+│   ├── explore_data.py
+│   ├── feature_engineered_data.csv
+│   ├── feature_exploration.py
+│   ├── features.py
+│   ├── raw_data_combine.py    
+├── gui/
+│   ├── main.py         
+├── model/
+│   ├── clustering.py
+│   ├── time_series.py
+├── results/
+│   ├── clustering/            <-- CSVs of metrics and trained model
+│   ├── data/                  <-- Images of exploration of clean data
+│   ├── eda/                   <-- Data Exploration
+│   ├── feature_eda/           <-- Feature Data Exploration
+│   ├── time_series/           <-- CSVs of metrics and trained model
 ```
 
 ---
